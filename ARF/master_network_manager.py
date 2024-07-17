@@ -15,10 +15,12 @@ def checkStatus(ip):
 # SOCK_STREAM => IPv4
 
 
-if __name__ == '__main__':
+def connectToTestSlave():
+    global client
+
     sobj = socket(AF_INET,SOCK_STREAM)
-    sobj.bind(('127.0.0.1',32032))
-    sobj.listen(1)
+    sobj.bind(('192.168.0.101',32032))
+    sobj.listen(4)
 
     client , addr = sobj.accept()
     print("the ip is connected to server ",addr)

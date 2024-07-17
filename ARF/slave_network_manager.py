@@ -11,5 +11,5 @@ if __name__ == '__main__':
     while True:
         message = sobj.recv(BUFFER_SIZE).decode()
         if(message == "checkstatus"):
-            sobj.send(3)
+            sobj.send()
 

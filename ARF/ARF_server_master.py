@@ -142,6 +142,8 @@ class CliInterface(cmd.Cmd):
     
 # ----- main -----
 if __name__ == '__main__':
+    nm.connectToTestSlave()
+
     # run cli or gui app
     if args["nogui"]:
         app = CliInterface()
