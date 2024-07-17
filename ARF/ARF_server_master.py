@@ -4,16 +4,16 @@
 import sys
 import argparse 
 import shlex
+import cmd
 
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import QPalette, QColor
 from PyQt6.QtCore import Qt
 
-import cmd
-
 import render_manager as rm
 from ARFglobals import *
 import master_database as db
+import master_network_manager as nm
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
@@ -104,6 +104,37 @@ class CliInterface(cmd.Cmd):
 
         except SystemExit:
             pass   
+    
+    def do_render(self, arg):
+        'submitt render job to all rendering slaves: render --blend <path> '
+        try:
+            parser = argparse.ArgumentParser(prog='addslave')
+            parser.add_argument('-b', '--blend', help='Set path of blend file')
+            parser.add_argument('-f', '--frame', help='render a single frame and set frame number to render. by defult 1')
+            #parser.add_argument('-a', '--animation', help='render an animation')
+            args = parser.parse_args(shlex.split(arg))
+
+            blendpath = args.blend
+
+            if args.frame:
+                frame = args.frame if args.frame else '1'
+            elif args.animation:
+                pass
+            
+        except SystemExit:
+            pass  # argparse throws a SystemExit exception after parsing
+
+    def do_statuscheck(self, arg):
+        try:
+            parser = argparse.ArgumentParser(prog='addslave')
+            parser.add_argument('-s', '--slave', help='name of slave to check status of')
+            args = parser.parse_args(shlex.split(arg))
+
+            ipOfSlave = db.get_renderSlave(args.slave)
+            nm.checkStatus(ipOfSlave)
+
+        except SystemExit:
+            pass 
 
     def emptyline(self):
         pass  # Do nothing on empty input line

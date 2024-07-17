@@ -13,3 +13,6 @@ def insert_renderSlave(name, ip):
 
 def get_renderSlaves():
     return slaves.all()
+
+def get_renderSlave(name):
+    return slaves.search(q.name == name)
