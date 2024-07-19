@@ -37,7 +37,8 @@ class CliInterface(cmd.Cmd):
     prompt = '>> '
     config = None
 
-
+    def emptyline(self):
+        pass  # Do nothing on empty input line
 
     
 # ----- main -----

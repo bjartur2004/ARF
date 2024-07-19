@@ -21,6 +21,10 @@ ap.add_argument("-n", "--nogui",action='store_true', help="runs the app as a cli
 args = vars(ap.parse_args())
 
 
+# ------ Functions ------
+def handleNetworkCallback(message):
+    print(message)
+
 # ----- Gui -----
 
 class GuiInterface(QDialog):
@@ -131,7 +135,7 @@ class CliInterface(cmd.Cmd):
             args = parser.parse_args(shlex.split(arg))
 
             ipOfSlave = db.get_renderSlave(args.slave)
-            nm.checkStatus(ipOfSlave)
+            print(nm.checkStatus(ipOfSlave))
 
         except SystemExit:
             pass 
@@ -142,14 +146,17 @@ class CliInterface(cmd.Cmd):
     
 # ----- main -----
 if __name__ == '__main__':
-    nm.connectToTestSlave()
+    serverSocket = nm.openSlavePort(handleNetworkCallback)
+    try:
+        # run cli or gui app
+        if args["nogui"]:
+            app = CliInterface()
+            app.cmdloop()
+        else:
+            app = QApplication(sys.argv)
+            master = GuiInterface()
+            master.show()
+            sys.exit(app.exec())
+    finally:
+        serverSocket.close()
 
-    # run cli or gui app
-    if args["nogui"]:
-        app = CliInterface()
-        app.cmdloop()
-    else:
-        app = QApplication(sys.argv)
-        master = GuiInterface()
-        master.show()
-        sys.exit(app.exec())
