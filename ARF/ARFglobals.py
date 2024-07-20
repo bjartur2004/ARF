@@ -52,8 +52,8 @@ class Status(Enum):
     Unknown = 0
     Unresponsive = 1
     Error = 2
-    NotReady = 3
-    Ready = 4
+    Standby = 3
+    Preparing = 4
     Rendering = 5
 
 class renderSlave():
