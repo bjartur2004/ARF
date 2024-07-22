@@ -15,6 +15,16 @@ config = yaml.safe_load(open("slave_config.yaml"))
 ap = argparse.ArgumentParser()
 args = vars(ap.parse_args())
 
+# ------ Functions ------
+
+
+def networkCallback(client, clentIp, message):
+
+    messageType = message
+
+    print(client, message)
+
+
 # ----- Cli ----- 
 class CliInterface(cmd.Cmd):
 
@@ -43,6 +53,7 @@ class CliInterface(cmd.Cmd):
     
 # ----- main -----
 if __name__ == '__main__':
+    nm.startNetworkManager(networkCallback)
     app = CliInterface()
     app.cmdloop()
    

@@ -5,6 +5,7 @@ import sys
 import argparse 
 import shlex
 import cmd
+import yaml
 
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import QPalette, QColor
@@ -15,15 +16,35 @@ from ARFglobals import *
 import master_database as db
 import master_network_manager as nm
 
+config = yaml.safe_load(open("master_config.yaml"))
+
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-n", "--nogui",action='store_true', help="runs the app as a cli app")
 args = vars(ap.parse_args())
 
-
 # ------ Functions ------
-def handleNetworkCallback(message):
-    print(message)
+
+def handleClientMac(addr):
+    print(addr)
+    if db.get_renderSlave("uuid", addr):
+        pass
+    else:
+        db.insert_innit_renderSlave(addr)
+    
+
+def networkCallback(client, clentIp, message):
+    message = message.split("/")
+    for mes in message:
+        if len(mes) <= 1:
+            continue
+
+        messageType,messageVar = mes.split("=")
+
+        if messageType == "SetMacAddr":
+            handleClientMac(messageVar)
+
+        #print(client, message)
 
 # ----- Gui -----
 
@@ -81,30 +102,17 @@ class CliInterface(cmd.Cmd):
     prompt = '>> '
     config = None
 
-    def do_addslave(self, arg):
-        'Add a rendering slave: addslave --name <name> [--ip <ip>]'
-        try:
-            parser = argparse.ArgumentParser(prog='addslave')
-            parser.add_argument('name', help='Name of the rendering slave')
-            parser.add_argument('--ip', help='IP address of the rendering slave')
-            args = parser.parse_args(shlex.split(arg))
-
-            name = args.name
-            ip = args.ip if args.ip else '0.0.0.0'  # Default IP address if not provided
-
-            db.insert_renderSlave(name, ip)
-            
-        except SystemExit:
-            pass  # argparse throws a SystemExit exception after parsing
 
     def do_listslaves(self, arg):
-        'Add a rendering slave: addslave --name <name> [--ip <ip>]'
+        'List all rendering slaves'
         try:
             parser = argparse.ArgumentParser(prog='listslaves')
             args = parser.parse_args(shlex.split(arg))
-
             
-            print(formatTable(db.get_renderSlaves(), reverse=True)) # reverse to make name at front
+            with nm.clients_locked:
+                print(nm.clients)
+
+            print(formatTable(db.get_renderSlaves()))
 
         except SystemExit:
             pass   
@@ -118,7 +126,9 @@ class CliInterface(cmd.Cmd):
             #parser.add_argument('-a', '--animation', help='render an animation')
             args = parser.parse_args(shlex.split(arg))
 
-            blendpath = args.blend
+            blendpath = args.blend if args.blend else config["setup"]["blend_path"]
+
+            nm.send_file_to_all_clients(blendpath)
 
             if args.frame:
                 frame = args.frame if args.frame else '1'
@@ -146,7 +156,7 @@ class CliInterface(cmd.Cmd):
     
 # ----- main -----
 if __name__ == '__main__':
-    serverSocket = nm.openSlavePort(handleNetworkCallback)
+    serverSocket = nm.openSlavePort(networkCallback)
     try:
         # run cli or gui app
         if args["nogui"]:

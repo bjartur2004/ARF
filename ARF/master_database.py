@@ -8,11 +8,14 @@ slaves = db.table('slaves')
 
 q = Query()
 
-def insert_renderSlave(name, ip):
-    slaves.insert({'name':name, 'ip':ip})
+def insert_innit_renderSlave(uuid):
+    slaves.insert({'name':"", 'uuid':uuid})
 
 def get_renderSlaves():
     return slaves.all()
 
-def get_renderSlave(name):
-    return slaves.search(q.name == name)
+def get_renderSlave(key, val):
+    if key == "name":
+        return slaves.search(q.name == val)
+    elif key == "uuid":
+        return slaves.search(q.uuid == val)
