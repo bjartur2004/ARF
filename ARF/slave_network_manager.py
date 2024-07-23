@@ -39,14 +39,18 @@ def sendMac():
     macAd = uuid.getnode()
     soc.sendall(f"/SetMacAddr={macAd}".encode())
 
-def receive_file():
+def receive_file(filesize):
     try:
+        filesize = int(filesize)
+        received_size = 0
         with open("blend.blend", 'wb') as f:
-            while True:
+            while received_size < filesize:
                 data = soc.recv(BUFFER_SIZE)
                 if not data:
                     break
                 f.write(data)
+                received_size += len(data)
+
         print(f"File received successfully and saved as blend.blend")
     except Exception as e:
         print(f"Error receiving file: {e}")
@@ -75,15 +79,19 @@ def listen_to_master(message_callback):
     try:
         while True:
             message = soc.recv(BUFFER_SIZE).decode()
-            if not message:
-                break
-            
-            if message == 'send_file':
-                receive_file()  # Save the received file as 'received_file.txt'
-            else:
-                message_callback(soc, message)
+            messages = message.split("/")
+            for mes in messages:
+                if not mes or len(mes) <= 1:
+                    continue
+
+                messageType,messageVar = mes.split("=")
+                
+                if messageType == 'send_file':
+                    receive_file(messageVar)  
+                else:
+                    message_callback(soc, message)
     except Exception as e:
-        print("error occured with connection to master")
+        print(f"error occured with connection to master: {e}")
         pass
 
 
