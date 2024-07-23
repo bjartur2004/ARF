@@ -3,6 +3,7 @@
 
 from socket import AF_INET,SOCK_STREAM,socket
 from threading import Thread, Lock
+from os import path
 
 BUFFER_SIZE = 1024
 
@@ -48,8 +49,10 @@ def accept_connections(server_socket, message_callback):
 
 def send_file_to_client(client_socket, file_path):
     try:
+        file_size = path.getsize(file_path)
+
         with open(file_path, 'rb') as f:
-            client_socket.sendall("send_file".encode())
+            client_socket.sendall(f"/send_file={file_size}".encode())
 
             while chunk := f.read(BUFFER_SIZE):
                 client_socket.sendall(chunk)
@@ -58,11 +61,15 @@ def send_file_to_client(client_socket, file_path):
 
 def send_file_to_all_clients(file_path):
     # todo: add a way to select what clients are included
+
+    threads = []
     with clients_locked:
         for client_socket in clients:
             send_thread = Thread(target=send_file_to_client, args=(client_socket, file_path))
             send_thread.daemon = True
+            threads.append(send_thread)
             send_thread.start()
+    return threads
 
 def openSlavePort(message_callback):
     global client

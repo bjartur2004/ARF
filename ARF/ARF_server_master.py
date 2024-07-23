@@ -6,6 +6,8 @@ import argparse
 import shlex
 import cmd
 import yaml
+import subprocess
+
 
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import QPalette, QColor
@@ -25,8 +27,18 @@ args = vars(ap.parse_args())
 
 # ------ Functions ------
 
+def startRendering(blendpath):
+    subprocess.run([config["setup"]["blender_exe_path"], '-b', 'blend.blend' ,'-P', 'blenderScripts/setRenderRegion.py', "--", "0", "0.5", "0", "0.5"])
+
+    #fileSendingThreads = nm.send_file_to_all_clients(blendpath)
+
+    #for t in fileSendingThreads:
+    #    t.join() # await blend file distribution
+
+
+
+
 def handleClientMac(addr):
-    print(addr)
     if db.get_renderSlave("uuid", addr):
         pass
     else:
@@ -128,12 +140,12 @@ class CliInterface(cmd.Cmd):
 
             blendpath = args.blend if args.blend else config["setup"]["blend_path"]
 
-            nm.send_file_to_all_clients(blendpath)
-
             if args.frame:
                 frame = args.frame if args.frame else '1'
             elif args.animation:
                 pass
+
+            startRendering(blendpath)
             
         except SystemExit:
             pass  # argparse throws a SystemExit exception after parsing
