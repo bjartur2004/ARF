@@ -5,8 +5,9 @@ ARF is a simple python based rendering farm manager for blender
 
 ## For MVP
 - [ ] cli interface
+- [x] slave connect to master
 - [ ] rendering command
-  - [ ] send blend
+  - [x] send blend
   - [ ] calculate task distribution
     - [ ] stills
     - [ ] animations
