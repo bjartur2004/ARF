@@ -28,6 +28,7 @@ args = vars(ap.parse_args())
 # ------ Functions ------
 
 def startRendering(blendpath):
+    print(subprocess.check_output([config["setup"]["blender_exe_path"], '-b', 'blend.blend' ,'-P', 'blenderScripts/getResolution.py']))
     subprocess.run([config["setup"]["blender_exe_path"], '-b', 'blend.blend' ,'-P', 'blenderScripts/setRenderRegion.py', "--", "0", "0.5", "0", "0.5"])
 
     #fileSendingThreads = nm.send_file_to_all_clients(blendpath)
