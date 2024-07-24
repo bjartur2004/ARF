@@ -8,7 +8,6 @@ import cmd
 import yaml
 import subprocess
 
-
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import QPalette, QColor
 from PyQt6.QtCore import Qt
@@ -27,24 +26,35 @@ args = vars(ap.parse_args())
 
 # ------ Functions ------
 
-def startRendering(blendpath):
-    print(subprocess.check_output([config["setup"]["blender_exe_path"], '-b', 'blend.blend' ,'-P', 'blenderScripts/getResolution.py']))
+def startRenderingStill(blendpath, frame):
+    #get info 
+    #calculate region
+
     subprocess.run([config["setup"]["blender_exe_path"], '-b', 'blend.blend' ,'-P', 'blenderScripts/setRenderRegion.py', "--", "0", "0.5", "0", "0.5"])
 
-    #fileSendingThreads = nm.send_file_to_all_clients(blendpath)
+    fileSendingThreads = nm.send_file_to_all_clients(blendpath)
 
-    #for t in fileSendingThreads:
-    #    t.join() # await blend file distribution
+    for t in fileSendingThreads:
+        t.join() # await blend file distribution
 
+def startRenderingAnimation(blendpath, frames):
+    #get info 
 
+    fileSendingThreads = nm.send_file_to_all_clients(blendpath)
 
+    #calculate frame distribution
+
+    
+
+    for t in fileSendingThreads:
+        t.join() # await blend file distribution
 
 def handleClientMac(addr):
     if db.get_renderSlave("uuid", addr):
         pass
     else:
         db.insert_innit_renderSlave(addr)
-    
+
 
 def networkCallback(client, clentIp, message):
     message = message.split("/")
@@ -146,7 +156,7 @@ class CliInterface(cmd.Cmd):
             elif args.animation:
                 pass
 
-            startRendering(blendpath)
+            startRenderingStill(blendpath, frame)
             
         except SystemExit:
             pass  # argparse throws a SystemExit exception after parsing
@@ -165,7 +175,6 @@ class CliInterface(cmd.Cmd):
 
     def emptyline(self):
         pass  # Do nothing on empty input line
-
     
 # ----- main -----
 if __name__ == '__main__':
