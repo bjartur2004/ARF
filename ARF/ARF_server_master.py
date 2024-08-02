@@ -43,7 +43,6 @@ def startRenderingAnimation(blendpath, frames):
     fileSendingThreads = nm.send_file_to_all_clients(blendpath)
 
     #calculate frame distribution
-
     
 
     for t in fileSendingThreads:
