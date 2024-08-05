@@ -17,6 +17,38 @@ def checkStatus(ip):
     #print(responce)
     pass
 
+def send_file_to_client(client_socket, file_path):
+    try:
+        file_size = path.getsize(file_path)
+
+        with open(file_path, 'rb') as f:
+            client_socket.sendall(f"/blend_file={file_size}".encode())
+
+            while chunk := f.read(BUFFER_SIZE):
+                client_socket.sendall(chunk)
+    except Exception as e:
+        print(f"Error sending file to client: {e}")
+
+def send_file_to_all_clients(file_path):
+    # todo: add a way to select what clients are included
+
+    threads = []
+    with clients_locked:
+        for client_socket in clients:
+            send_thread = Thread(target=send_file_to_client, args=(client_socket, file_path))
+            send_thread.daemon = True
+            threads.append(send_thread)
+            send_thread.start()
+    return threads
+
+def start_render_on_all_clients():
+    with clients_locked:
+        for client_socket in clients:
+            client_socket.sendall(f"/start_render_still=1".encode())
+          
+
+# listening threads and connection stuff
+
 def client_listen(client_socket, client_address, message_callback):
     #print(f"New connection from {client_address}")
 
@@ -46,30 +78,6 @@ def accept_connections(server_socket, message_callback):
         client_thread = Thread(target=client_listen, args=(client_socket, client_address, message_callback))
         client_thread.daemon = True  # This ensures the thread will exit when the main program exits
         client_thread.start()
-
-def send_file_to_client(client_socket, file_path):
-    try:
-        file_size = path.getsize(file_path)
-
-        with open(file_path, 'rb') as f:
-            client_socket.sendall(f"/send_file={file_size}".encode())
-
-            while chunk := f.read(BUFFER_SIZE):
-                client_socket.sendall(chunk)
-    except Exception as e:
-        print(f"Error sending file to client: {e}")
-
-def send_file_to_all_clients(file_path):
-    # todo: add a way to select what clients are included
-
-    threads = []
-    with clients_locked:
-        for client_socket in clients:
-            send_thread = Thread(target=send_file_to_client, args=(client_socket, file_path))
-            send_thread.daemon = True
-            threads.append(send_thread)
-            send_thread.start()
-    return threads
 
 def openSlavePort(message_callback):
     global client

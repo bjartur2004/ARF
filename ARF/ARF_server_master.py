@@ -30,12 +30,15 @@ def startRenderingStill(blendpath, frame):
     #get info 
     #calculate region
 
-    subprocess.run([config["setup"]["blender_exe_path"], '-b', 'blend.blend' ,'-P', 'blenderScripts/setRenderRegion.py', "--", "0", "0.5", "0", "0.5"])
+    # subprocess.run([config["setup"]["blender_exe_path"], '-b', 'blend.blend' ,'-P', 'blenderScripts/getReselution.py)
 
     fileSendingThreads = nm.send_file_to_all_clients(blendpath)
 
     for t in fileSendingThreads:
         t.join() # await blend file distribution
+
+    nm.start_render_on_all_clients()
+    
 
 def startRenderingAnimation(blendpath, frames):
     #get info 
@@ -65,6 +68,7 @@ def networkCallback(client, clentIp, message):
 
         if messageType == "SetMacAddr":
             handleClientMac(messageVar)
+
 
         #print(client, message)
 

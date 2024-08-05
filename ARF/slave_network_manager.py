@@ -5,6 +5,7 @@ from socket import socket, AF_INET,SOCK_STREAM,SHUT_RDWR
 from threading import Thread, Lock
 from time import sleep
 import uuid
+from os import makedirs, path
 
 BUFFER_SIZE = 1024
 RETRY_DELAY = 5
@@ -39,11 +40,18 @@ def sendMac():
     macAd = uuid.getnode()
     soc.sendall(f"/SetMacAddr={macAd}".encode())
 
-def receive_file(filesize):
+
+def receive_file(filesize, blendpath):
     try:
         filesize = int(filesize)
         received_size = 0
-        with open("blend.blend", 'wb') as f:
+
+        # prepare directory
+
+        makedirs(path.dirname(blendpath), exist_ok=True)
+
+
+        with open(blendpath, 'wb') as f:
             while received_size < filesize:
                 data = soc.recv(BUFFER_SIZE)
                 if not data:
@@ -51,12 +59,13 @@ def receive_file(filesize):
                 f.write(data)
                 received_size += len(data)
 
-        print(f"File received successfully and saved as blend.blend")
+        print(f"File received successfully and saved")
+
     except Exception as e:
         print(f"Error receiving file: {e}")
 
 
-def connectToMaster(message_callback):
+def connectToMaster(config, message_callback):
     while True:
         try:
             connectSocket()
@@ -64,7 +73,7 @@ def connectToMaster(message_callback):
             sendMac()
             sendStatus(3)
             #start listening
-            listening_thread = Thread(target=listen_to_master, args=(message_callback,))
+            listening_thread = Thread(target=listen_to_master, args=(config, message_callback,))
             listening_thread.daemon = True  # This ensures the thread will exit when the main program exits
             listening_thread.start()
 
@@ -75,7 +84,7 @@ def connectToMaster(message_callback):
             onConnectionFailiure(e)
 
 
-def listen_to_master(message_callback):
+def listen_to_master(config, message_callback):
     try:
         while True:
             message = soc.recv(BUFFER_SIZE).decode()
@@ -86,8 +95,10 @@ def listen_to_master(message_callback):
 
                 messageType,messageVar = mes.split("=")
                 
-                if messageType == 'send_file':
-                    receive_file(messageVar)  
+                if messageType == 'blend_file':
+                    blendpath = config["blend_download_path"]
+
+                    receive_file(messageVar, blendpath)  
                 else:
                     message_callback(soc, message)
     except Exception as e:
@@ -95,11 +106,11 @@ def listen_to_master(message_callback):
         pass
 
 
-def startNetworkManager(message_callback):
+def startNetworkManager(config, message_callback):
     global soc
     soc = socket(AF_INET,SOCK_STREAM)
     
-    connecting_thread = Thread(target=connectToMaster, args=(message_callback,))
+    connecting_thread = Thread(target=connectToMaster, args=(config, message_callback,))
     connecting_thread.daemon = True  # This ensures the thread will exit when the main program exits
     connecting_thread.start()
 
